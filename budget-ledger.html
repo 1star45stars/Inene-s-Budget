@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="My Budget"/>
+<title>My Budget</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cream:#faf6f0;--warm:#f5ede0;--gold:#c9973a;--gold-light:#e8c06a;
+  --gold-pale:#fdf3dc;--ink:#1a1510;--ink2:#3d3228;--ink3:#7a6a58;
+  --ink4:#b09e8c;--green:#2d7d5a;--green-bg:#edf7f2;--red:#c0392b;
+  --red-bg:#fdf0ee;--white:#ffffff;
+  --shadow:0 4px 24px rgba(100,70,30,0.10);--shadow-lg:0 12px 48px rgba(100,70,30,0.16);
+}
+body{background:var(--cream);color:var(--ink);font-family:'DM Sans',sans-serif;min-height:100vh;font-size:15px;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.5;}
+
+.header{background:var(--ink);padding:0 24px;position:sticky;top:0;z-index:100;}
+.header-inner{max-width:900px;margin:0 auto;}
+.header-top{display:flex;align-items:center;gap:16px;padding:20px 0 0;}
+.logo-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;color:var(--ink);font-weight:600;flex-shrink:0;}
+.header-titles{flex:1;}
+.header-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--white);letter-spacing:0.3px;line-height:1;}
+.header-sub{font-size:11px;color:var(--ink4);margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;}
+.save-chip{font-size:11px;color:var(--green);background:rgba(45,125,90,0.15);border:1px solid rgba(45,125,90,0.3);border-radius:20px;padding:4px 12px;letter-spacing:0.3px;opacity:0;transition:opacity 0.3s;flex-shrink:0;}
+.save-chip.show{opacity:1;}
+.tabs{display:flex;gap:2px;padding:16px 0 0;}
+.tab{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--ink4);background:transparent;border:none;border-bottom:2px solid transparent;padding:10px 20px 12px;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;}
+.tab:hover{color:var(--gold-light);}
+.tab.active{color:var(--gold-light);border-bottom-color:var(--gold);}
+
+.main{max-width:900px;margin:0 auto;padding:28px 20px 60px;position:relative;z-index:1;}
+.panel{display:none;animation:fadeUp 0.3s ease;}
+.panel.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.income-hero{background:linear-gradient(135deg,var(--ink) 0%,#2d2218 100%);border-radius:20px;padding:28px 28px 24px;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:var(--shadow-lg);}
+.income-hero::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(201,151,58,0.2) 0%,transparent 70%);pointer-events:none;}
+.income-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:12px;}
+.income-input-wrap{display:flex;align-items:center;gap:10px;}
+.currency-symbol{font-family:'Playfair Display',serif;font-size:32px;color:var(--gold);font-style:italic;}
+.income-input{background:transparent;border:none;outline:none;font-family:'Playfair Display',serif;font-size:38px;font-weight:600;color:var(--white);width:100%;letter-spacing:-1px;}
+.income-input::placeholder{color:rgba(255,255,255,0.2);}
+.income-divider{height:1px;background:rgba(255,255,255,0.08);margin:20px 0 16px;}
+.income-quick{font-size:12px;color:var(--ink4);}
+
+.summary-row{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px;}
+.sum-card{background:var(--white);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);border:1px solid rgba(201,151,58,0.1);transition:transform 0.2s;}
+.sum-card:hover{transform:translateY(-2px);}
+.sum-card.remaining-card{background:var(--green-bg);border-color:rgba(45,125,90,0.2);}
+.sum-card.over-budget{background:var(--red-bg);border-color:rgba(192,57,43,0.2);}
+.sum-card-icon{font-size:18px;margin-bottom:8px;}
+.sum-card-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:6px;}
+.sum-card-value{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--ink);line-height:1;}
+.sum-card.remaining-card .sum-card-value{color:var(--green);}
+.sum-card.over-budget .sum-card-value{color:var(--red);}
+
+.progress-card{background:var(--white);border-radius:16px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:20px;border:1px solid rgba(201,151,58,0.08);}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.progress-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:var(--ink);}
+.status-badge{font-size:12px;font-weight:500;padding:4px 12px;border-radius:20px;background:var(--green-bg);color:var(--green);border:1px solid rgba(45,125,90,0.2);}
+.status-badge.over{background:var(--red-bg);color:var(--red);border-color:rgba(192,57,43,0.2);}
+.track-bar{height:12px;background:var(--warm);border-radius:99px;overflow:hidden;}
+.track-fill{height:100%;border-radius:99px;transition:width 0.6s cubic-bezier(.34,1.56,.64,1);}
+.track-fill.ok{background:linear-gradient(90deg,var(--gold),var(--gold-light));}
+.track-fill.bad{background:linear-gradient(90deg,#e74c3c,#c0392b);}
+.progress-nums{display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--ink4);}
+.progress-nums strong{color:var(--ink2);font-weight:500;}
+.breakdown{margin-top:18px;padding-top:18px;border-top:1px solid var(--warm);}
+.breakdown-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:14px;}
+.bd-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.bd-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.bd-name{font-size:13px;color:var(--ink3);flex:1;}
+.bd-bar-wrap{width:100px;height:5px;background:var(--warm);border-radius:99px;overflow:hidden;}
+.bd-bar{height:100%;border-radius:99px;transition:width 0.5s ease;}
+.bd-val{font-size:13px;font-weight:500;color:var(--ink2);min-width:80px;text-align:right;}
+
+.section-head{margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;}
+.section-head-left h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--ink);}
+.section-head-left p{font-size:12px;color:var(--ink4);margin-top:3px;}
+.section-total-badge{background:var(--gold-pale);border:1px solid rgba(201,151,58,0.3);border-radius:10px;padding:6px 14px;text-align:right;}
+.section-total-badge .stb-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);display:block;}
+.section-total-badge .stb-val{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--ink);}
+
+.item-card{background:var(--white);border-radius:14px;border:1px solid rgba(201,151,58,0.1);margin-bottom:10px;padding:14px 16px;display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(100,70,30,0.05);transition:box-shadow 0.2s;}
+.item-card:hover{box-shadow:var(--shadow);}
+.item-name{background:transparent;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--ink);width:100%;font-weight:400;}
+.item-name::placeholder{color:var(--ink4);}
+.item-amount-wrap{display:flex;align-items:center;gap:4px;background:var(--warm);border-radius:10px;padding:8px 12px;border:1.5px solid transparent;transition:border-color 0.2s;}
+.item-amount-wrap:focus-within{border-color:var(--gold);}
+.item-symbol{font-size:13px;color:var(--ink3);font-weight:500;}
+.item-amount{background:transparent;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;color:var(--ink);width:90px;text-align:right;}
+.item-cat{background:var(--warm);border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--ink3);border-radius:10px;padding:8px 10px;cursor:pointer;}
+.item-remove{width:32px;height:32px;border-radius:8px;background:transparent;border:1px solid rgba(192,57,43,0.15);color:var(--ink4);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;}
+.item-remove:hover{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+
+.add-btn{width:100%;background:transparent;border:2px dashed rgba(201,151,58,0.3);border-radius:14px;padding:14px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--gold);transition:all 0.2s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.add-btn:hover{background:var(--gold-pale);border-color:var(--gold);}
+.add-btn-icon{width:24px;height:24px;border-radius:6px;background:var(--gold-pale);display:flex;align-items:center;justify-content:center;font-size:16px;}
+
+.add-form{background:var(--white);border-radius:16px;border:1px solid rgba(201,151,58,0.2);padding:20px;margin-top:10px;box-shadow:var(--shadow);animation:fadeUp 0.2s ease;}
+.add-form-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--ink);margin-bottom:14px;}
+.add-form-row{display:grid;grid-template-columns:1fr 140px;gap:10px;margin-bottom:10px;}
+.form-input{background:var(--warm);border:1.5px solid transparent;border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);width:100%;outline:none;transition:border-color 0.2s;}
+.form-input:focus{border-color:var(--gold);background:var(--white);}
+.form-input::placeholder{color:var(--ink4);}
+.add-form-btns{display:flex;gap:10px;margin-top:14px;}
+.btn-add{background:var(--ink);color:var(--white);border:none;border-radius:10px;padding:11px 24px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;}
+.btn-add:hover{background:var(--ink2);}
+.btn-cancel{background:var(--warm);color:var(--ink3);border:none;border-radius:10px;padding:11px 18px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:all 0.2s;}
+.btn-cancel:hover{background:var(--red-bg);color:var(--red);}
+
+.savings-card{background:var(--white);border-radius:16px;padding:22px 24px;box-shadow:var(--shadow);border:1px solid rgba(45,125,90,0.12);}
+.savings-input-wrap{display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--green-bg);border-radius:12px;padding:14px 18px;border:1.5px solid rgba(45,125,90,0.15);transition:border-color 0.2s;}
+.savings-input-wrap:focus-within{border-color:var(--green);}
+.savings-symbol{font-family:'Playfair Display',serif;font-size:22px;color:var(--green);font-style:italic;}
+.savings-input{background:transparent;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:20px;font-weight:500;color:var(--green);flex:1;}
+.savings-input::placeholder{color:rgba(45,125,90,0.35);}
+
+.divider{height:1px;background:var(--warm);margin:28px 0;}
+.empty-state{text-align:center;padding:32px 20px;color:var(--ink4);font-size:14px;}
+
+@media(max-width:560px){
+  .summary-row{grid-template-columns:1fr 1fr;}
+  .item-card{grid-template-columns:1fr auto auto;}
+  .item-cat{display:none;}
+  .add-form-row{grid-template-columns:1fr;}
+  .income-input{font-size:28px;}
+  .bd-bar-wrap{width:60px;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="logo-mark">₦</div>
+      <div class="header-titles">
+        <div class="header-title">My Budget</div>
+        <div class="header-sub">Monthly Tracker</div>
+      </div>
+      <div class="save-chip" id="saveChip">✓ Saved</div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview',this)">Overview</button>
+      <button class="tab" onclick="switchTab('bills',this)">Bills</button>
+      <button class="tab" onclick="switchTab('spending',this)">Spending</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- OVERVIEW -->
+  <div class="panel active" id="panel-overview">
+    <div class="income-hero">
+      <div class="income-label">Monthly Take-Home Income</div>
+      <div class="income-input-wrap">
+        <span class="currency-symbol">₦</span>
+        <input class="income-input" type="number" id="incomeInput" placeholder="0" oninput="save()"/>
+      </div>
+      <div class="income-divider"></div>
+      <div class="income-quick">Enter your salary above to see your full budget breakdown</div>
+    </div>
+
+    <div class="summary-row">
+      <div class="sum-card">
+        <div class="sum-card-icon">🏠</div>
+        <div class="sum-card-label">Fixed Bills</div>
+        <div class="sum-card-value" id="sum-fixed">₦0</div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-card-icon">🛒</div>
+        <div class="sum-card-label">Spending</div>
+        <div class="sum-card-value" id="sum-variable">₦0</div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-card-icon">🏦</div>
+        <div class="sum-card-label">Savings</div>
+        <div class="sum-card-value" id="sum-savings">₦0</div>
+      </div>
+      <div class="sum-card remaining-card" id="remaining-card">
+        <div class="sum-card-icon">💰</div>
+        <div class="sum-card-label">Remaining</div>
+        <div class="sum-card-value" id="sum-remaining">₦0</div>
+      </div>
+    </div>
+
+    <div class="progress-card">
+      <div class="progress-header">
+        <div class="progress-title">Budget Health</div>
+        <div class="status-badge" id="statusBadge">On Track ✓</div>
+      </div>
+      <div class="track-bar">
+        <div class="track-fill ok" id="trackFill" style="width:0%"></div>
+      </div>
+      <div class="progress-nums">
+        <span>Spent: <strong id="spentLabel">₦0</strong></span>
+        <span>Income: <strong id="incomeLabel">₦0</strong></span>
+      </div>
+      <div class="breakdown" id="breakdownSection" style="display:none">
+        <div class="breakdown-title">Where your money goes</div>
+        <div class="bd-row">
+          <div class="bd-dot" style="background:#c9973a"></div>
+          <div class="bd-name">Fixed Bills</div>
+          <div class="bd-bar-wrap"><div class="bd-bar" id="bd-fixed-bar" style="background:#c9973a;width:0%"></div></div>
+          <div class="bd-val" id="bd-fixed-val">₦0</div>
+        </div>
+        <div class="bd-row">
+          <div class="bd-dot" style="background:#5b9bd5"></div>
+          <div class="bd-name">Spending</div>
+          <div class="bd-bar-wrap"><div class="bd-bar" id="bd-var-bar" style="background:#5b9bd5;width:0%"></div></div>
+          <div class="bd-val" id="bd-var-val">₦0</div>
+        </div>
+        <div class="bd-row">
+          <div class="bd-dot" style="background:#2d7d5a"></div>
+          <div class="bd-name">Savings</div>
+          <div class="bd-bar-wrap"><div class="bd-bar" id="bd-sav-bar" style="background:#2d7d5a;width:0%"></div></div>
+          <div class="bd-val" id="bd-sav-val">₦0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BILLS -->
+  <div class="panel" id="panel-bills">
+    <div class="section-head">
+      <div class="section-head-left">
+        <h2>Fixed Bills</h2>
+        <p>Recurring monthly expenses</p>
+      </div>
+      <div class="section-total-badge">
+        <span class="stb-label">Total</span>
+        <span class="stb-val" id="bills-total">₦0</span>
+      </div>
+    </div>
+    <div id="bills-list"></div>
+    <div id="add-fixed-trigger">
+      <button class="add-btn" onclick="showForm('fixed')">
+        <span class="add-btn-icon">+</span> Add a Bill
+      </button>
+    </div>
+    <div id="add-fixed-form" style="display:none">
+      <div class="add-form">
+        <div class="add-form-title">New Bill</div>
+        <div class="add-form-row">
+          <input class="form-input" type="text" id="nf-name" placeholder="e.g. Rent, DSTV, Loan..."/>
+          <input class="form-input" type="number" id="nf-amt" placeholder="Amount (₦)"/>
+        </div>
+        <select class="form-input" id="nf-cat" style="margin-bottom:0">
+          <option>Housing</option><option>Utilities</option><option>Food</option>
+          <option>Transport</option><option>Health</option><option>Entertainment</option>
+          <option>Subscriptions</option><option>Debt / Loan</option><option>Other</option>
+        </select>
+        <div class="add-form-btns">
+          <button class="btn-add" onclick="addItem('fixed')">Add Bill</button>
+          <button class="btn-cancel" onclick="hideForm('fixed')">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-head">
+      <div class="section-head-left">
+        <h2>Savings Goal</h2>
+        <p>Set aside every month</p>
+      </div>
+    </div>
+    <div class="savings-card">
+      <div class="income-label">How much do you want to save?</div>
+      <div class="savings-input-wrap">
+        <span class="savings-symbol">₦</span>
+        <input class="savings-input" type="number" id="savingsInput" placeholder="0" oninput="save()"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPENDING -->
+  <div class="panel" id="panel-spending">
+    <div class="section-head">
+      <div class="section-head-left">
+        <h2>Variable Spending</h2>
+        <p>Flexible monthly expenses</p>
+      </div>
+      <div class="section-total-badge">
+        <span class="stb-label">Total</span>
+        <span class="stb-val" id="variable-total">₦0</span>
+      </div>
+    </div>
+    <div id="variable-list"></div>
+    <div id="add-variable-trigger">
+      <button class="add-btn" onclick="showForm('variable')">
+        <span class="add-btn-icon">+</span> Add an Expense
+      </button>
+    </div>
+    <div id="add-variable-form" style="display:none">
+      <div class="add-form">
+        <div class="add-form-title">New Expense</div>
+        <div class="add-form-row">
+          <input class="form-input" type="text" id="nv-name" placeholder="e.g. Groceries, Fuel, Data..."/>
+          <input class="form-input" type="number" id="nv-amt" placeholder="Amount (₦)"/>
+        </div>
+        <select class="form-input" id="nv-cat" style="margin-bottom:0">
+          <option>Food</option><option>Transport</option><option>Health</option>
+          <option>Entertainment</option><option>Personal Care</option><option>Clothing</option>
+          <option>Utilities</option><option>Other</option>
+        </select>
+        <div class="add-form-btns">
+          <button class="btn-add" onclick="addItem('variable')">Add Expense</button>
+          <button class="btn-cancel" onclick="hideForm('variable')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const KEY="mybudget_ng_v2";
+const CATS_F=["Housing","Utilities","Food","Transport","Health","Entertainment","Subscriptions","Debt / Loan","Other"];
+const CATS_V=["Food","Transport","Health","Entertainment","Personal Care","Clothing","Utilities","Other"];
+
+let data={
+  income:"",savings:"",
+  bills:[
+    {id:1,name:"Rent / House",amount:"",category:"Housing"},
+    {id:2,name:"Electricity",amount:"",category:"Utilities"},
+    {id:3,name:"Internet / Data",amount:"",category:"Utilities"},
+  ],
+  vars:[
+    {id:1,name:"Groceries",amount:"",category:"Food"},
+    {id:2,name:"Transport / Fuel",amount:"",category:"Transport"},
+  ]
+};
+
+function load(){try{const s=localStorage.getItem(KEY);if(s)data=JSON.parse(s);}catch(e){}}
+
+let saveTimer;
+function save(){
+  readState();
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}
+    const c=document.getElementById("saveChip");
+    c.classList.add("show");
+    setTimeout(()=>c.classList.remove("show"),1800);
+    updateUI();
+  },350);
+}
+
+function fmt(v){v=parseFloat(v)||0;return"₦"+Math.abs(v).toLocaleString("en-NG",{maximumFractionDigits:0});}
+function esc(s){return String(s||"").replace(/"/g,"&quot;");}
+
+function readState(){
+  data.income=document.getElementById("incomeInput").value;
+  data.savings=document.getElementById("savingsInput").value;
+  data.bills.forEach(b=>{
+    const n=document.getElementById("fi-name-"+b.id);
+    const a=document.getElementById("fi-amt-"+b.id);
+    const c=document.getElementById("fi-cat-"+b.id);
+    if(n)b.name=n.value;if(a)b.amount=a.value;if(c)b.category=c.value;
+  });
+  data.vars.forEach(v=>{
+    const n=document.getElementById("va-name-"+v.id);
+    const a=document.getElementById("va-amt-"+v.id);
+    const c=document.getElementById("va-cat-"+v.id);
+    if(n)v.name=n.value;if(a)v.amount=a.value;if(c)v.category=c.value;
+  });
+}
+
+function updateUI(){
+  const income=parseFloat(data.income)||0;
+  const sav=parseFloat(data.savings)||0;
+  const fixed=data.bills.reduce((s,b)=>s+(parseFloat(b.amount)||0),0);
+  const variable=data.vars.reduce((s,v)=>s+(parseFloat(v.amount)||0),0);
+  const total=fixed+variable+sav;
+  const rem=income-total;
+  const pct=income?Math.min(total/income*100,100):0;
+  const ok=rem>=0;
+
+  document.getElementById("sum-fixed").textContent=fmt(fixed);
+  document.getElementById("sum-variable").textContent=fmt(variable);
+  document.getElementById("sum-savings").textContent=fmt(sav);
+  document.getElementById("sum-remaining").textContent=(rem<0?"-":"")+fmt(rem);
+  document.getElementById("remaining-card").className="sum-card "+(ok?"remaining-card":"over-budget");
+
+  const tf=document.getElementById("trackFill");
+  tf.style.width=pct+"%";tf.className="track-fill "+(ok?"ok":"bad");
+
+  const sb=document.getElementById("statusBadge");
+  sb.textContent=ok?"On Track ✓":"Over Budget ⚠";
+  sb.className="status-badge "+(ok?"":"over");
+
+  document.getElementById("spentLabel").textContent=fmt(total);
+  document.getElementById("incomeLabel").textContent=fmt(income);
+  document.getElementById("bills-total").textContent=fmt(fixed);
+  document.getElementById("variable-total").textContent=fmt(variable);
+
+  const bd=document.getElementById("breakdownSection");
+  bd.style.display=income?"block":"none";
+  if(income){
+    document.getElementById("bd-fixed-val").textContent=fmt(fixed);
+    document.getElementById("bd-var-val").textContent=fmt(variable);
+    document.getElementById("bd-sav-val").textContent=fmt(sav);
+    document.getElementById("bd-fixed-bar").style.width=Math.min(fixed/income*100,100)+"%";
+    document.getElementById("bd-var-bar").style.width=Math.min(variable/income*100,100)+"%";
+    document.getElementById("bd-sav-bar").style.width=Math.min(sav/income*100,100)+"%";
+  }
+}
+
+function renderBills(){
+  const c=document.getElementById("bills-list");c.innerHTML="";
+  if(!data.bills.length){c.innerHTML='<div class="empty-state">No bills yet — tap "Add a Bill" below</div>';return;}
+  data.bills.forEach(b=>{
+    const d=document.createElement("div");d.className="item-card";
+    d.innerHTML=`<input class="item-name" type="text" id="fi-name-${b.id}" value="${esc(b.name)}" placeholder="Bill name" oninput="save()"/>
+    <div class="item-amount-wrap"><span class="item-symbol">₦</span><input class="item-amount" type="number" id="fi-amt-${b.id}" value="${esc(b.amount)}" placeholder="0" oninput="save()"/></div>
+    <select class="item-cat" id="fi-cat-${b.id}" onchange="save()">${CATS_F.map(ct=>`<option${ct===b.category?" selected":""}>${ct}</option>`).join("")}</select>
+    <button class="item-remove" onclick="removeItem('bills',${b.id})">×</button>`;
+    c.appendChild(d);
+  });
+}
+
+function renderVars(){
+  const c=document.getElementById("variable-list");c.innerHTML="";
+  if(!data.vars.length){c.innerHTML='<div class="empty-state">No expenses yet — tap "Add an Expense" below</div>';return;}
+  data.vars.forEach(v=>{
+    const d=document.createElement("div");d.className="item-card";
+    d.innerHTML=`<input class="item-name" type="text" id="va-name-${v.id}" value="${esc(v.name)}" placeholder="Expense name" oninput="save()"/>
+    <div class="item-amount-wrap"><span class="item-symbol">₦</span><input class="item-amount" type="number" id="va-amt-${v.id}" value="${esc(v.amount)}" placeholder="0" oninput="save()"/></div>
+    <select class="item-cat" id="va-cat-${v.id}" onchange="save()">${CATS_V.map(ct=>`<option${ct===v.category?" selected":""}>${ct}</option>`).join("")}</select>
+    <button class="item-remove" onclick="removeItem('vars',${v.id})">×</button>`;
+    c.appendChild(d);
+  });
+}
+
+function removeItem(list,id){
+  readState();data[list]=data[list].filter(x=>x.id!==id);
+  if(list==="bills")renderBills();else renderVars();
+  updateUI();try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}
+}
+
+function showForm(t){
+  document.getElementById("add-"+t+"-form").style.display="block";
+  document.getElementById("add-"+t+"-trigger").style.display="none";
+  document.getElementById((t==="fixed"?"nf":"nv")+"-name").focus();
+}
+function hideForm(t){
+  document.getElementById("add-"+t+"-form").style.display="none";
+  document.getElementById("add-"+t+"-trigger").style.display="block";
+  const p=t==="fixed"?"nf":"nv";
+  document.getElementById(p+"-name").value="";
+  document.getElementById(p+"-amt").value="";
+}
+function addItem(t){
+  const p=t==="fixed"?"nf":"nv";
+  const name=document.getElementById(p+"-name").value.trim();
+  const amount=document.getElementById(p+"-amt").value;
+  const category=document.getElementById(p+"-cat").value;
+  if(!name)return;
+  const item={id:Date.now(),name,amount,category};
+  if(t==="fixed"){data.bills.push(item);renderBills();}
+  else{data.vars.push(item);renderVars();}
+  hideForm(t);updateUI();
+  try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.getElementById("panel-"+name).classList.add("active");
+  btn.classList.add("active");
+}
+
+load();
+document.getElementById("incomeInput").value=data.income;
+document.getElementById("savingsInput").value=data.savings;
+renderBills();renderVars();updateUI();
+</script>
+</body>
+</html>
